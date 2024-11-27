@@ -103,4 +103,4 @@ if __name__ == "__main__":
     # 결과를 DataFrame으로 변환하여 CSV로 저장
     if reviews:
         df = pd.DataFrame(reviews)
-        df.to_csv('naver_reviews.csv', index=False, encoding='utf-8-sig')
+        df.to_csv('data/naver_reviews.csv', index=False, encoding='utf-8-sig')
