@@ -1,4 +1,5 @@
 import time
+import platform
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -11,8 +12,9 @@ from selenium.webdriver.support import expected_conditions as EC
 class NaverMapCrawler:
     def __init__(self):
         """크롤러 초기화"""
+        self.arch = platform.machine()
         self.chrome_options = self._set_chrome_options()
-        self.driver = self._initialize_driver()
+        self.driver = self._initialize_driver(self.arch)
         self.wait = WebDriverWait(self.driver, 10)
         self.reviews_data = []  # 리뷰 데이터 저장용 리스트
         
@@ -26,7 +28,7 @@ class NaverMapCrawler:
         options.add_argument("--disable-extensions")
         return options
     
-    def _initialize_driver(self):
+    def _initialize_driver(self, arch):
         """웹드라이버 초기화"""
         service = Service(ChromeDriverManager().install())
         return webdriver.Chrome(service=service, options=self.chrome_options)
@@ -81,7 +83,6 @@ class NaverMapCrawler:
     def _extract_reviews(self):
         """모든 리뷰 데이터를 추출"""
         review_elements = self.driver.find_elements(By.CSS_SELECTOR, 'ul > li.pui__X35jYm')
-        
         for review in review_elements:
             try:
                 review_data = {
@@ -102,4 +103,4 @@ if __name__ == "__main__":
     # 결과를 DataFrame으로 변환하여 CSV로 저장
     if reviews:
         df = pd.DataFrame(reviews)
-        # df.to_csv('naver_reviews.csv', index=False, encoding='utf-8-sig')
+        df.to_csv('naver_reviews.csv', index=False, encoding='utf-8-sig')
