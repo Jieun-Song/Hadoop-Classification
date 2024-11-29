@@ -1,40 +1,77 @@
+import os
 import json
+import requests
+import numpy as np 
+import pandas as pd
 from konlpy.tag import Okt
 
+STOPWORDS_URL = "https://gist.githubusercontent.com/Nine1ll/3ec361da95ccd39101051ab57f86cf46/raw/a1a451421097fa9a93179cb1f1f0dc392f1f9da9/stopwords.txt"
+FILE_DOWNLOAD_PATH = "Preprocessing/data/stopwords.txt"
+
 class review_preprocessing:
-    def __init__(self) -> None:
+    """
+    0. 사전 수정 예정 (신조어 추가)
+    1. 불용어 제외 (불용어 다운로드) - 11/28 (완)
+    2. 조사 제외
+    """
+    def __init__(self, filepath="Preprocessing/data/stopwords.txt", github_url=None):
         self.okt = Okt()
+        self.stopwords = self.load_stopwords(filepath, github_url)
+        self.drop_pos = ["Josa", "Punctuation", "Foreign", "KoreanParticle"]
     
+
+    def load_stopwords(self, filepath="Preprocessing/data/stopwords.txt", github_url=None):
+        stopwords = []
+        if not os.path.exists(filepath):
+            if github_url is None:
+                raise ValueError("GitHub url이 제공되지 않았습니다.")
+            
+            # 다운로드하기
+            response = requests.get(github_url)
+            if response.status_code == 200:
+                # 멀쩡하게 반응하면
+                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                with open(filepath, "w", encoding="utf-8") as f:
+                    f.write(response.text)
+                print(f"stopwords.txt를 {github_url}에서 {filepath}에 다운로드 했습니다. ")
+            else:
+                raise Exception(f"우와 에러다. HTTP Status: {response.status_code} 실패했습니다.")
+        
+        # 파일 읽어오기
+        with open(filepath, "r", encoding="utf-8") as f:
+            stopwords = [line.strip() for line in f.readlines()]
+        
+        return stopwords
+
+
     def preprocess_with_nouns(self, text):
         words = self.okt.nouns(text)
+        return [word for word in words if word not in self.stopwords]
 
-        stopwords = {"너무", "진짜", "정말", "좋아요", "너무나", "이곳", "이런"}  # 임시
-        return [word for word in words if word not in stopwords]
 
     def preprocess_with_morphs(self, text, norm=False, stem=False):
         words = self.okt.morphs(text,norm=norm, stem=stem)
-
-        stopwords = {"너무", "진짜", "정말", "좋아요", "너무나", "이곳", "이런"}  # 임시
-        return [word for word in words if word not in stopwords]
+        return [word for word in words if word not in self.stopwords]
         
+
     def pos(self, text, norm=False, stem=False):
         return self.okt.pos(text, norm=norm, stem=stem)
-
-    def morphs(self, text, norm=False, stem=False):
-        return self.okt.morphs(text, norm=norm, stem=stem)
     
+    
+    def preprocessing(self, text, norm=False, stem=False):
+        words = self.okt.pos(text,norm=norm, stem=stem)
+        # print(words)
+        words = [word for word, pos in words if pos not in self.drop_pos]
+        return [word for word in words if word not in self.stopwords]
+    
+
     def normalize(self, text):
         return self.okt.normalize(text)
+
 
     def phrases(self, text):
         return self.okt.phrases(text)
     
-    def identifying_similarity(text, fake_review_bow):
-        """
-        text: 검사할 리뷰
-        fake_review_bow: 강남맛집 키워드 (허위 리뷰)
-        """
-        return False
 
 if __name__ == "__main__":
     temp_data1 = [{
@@ -107,8 +144,8 @@ if __name__ == "__main__":
         "작성일": "11.6.수",
         "재방문 여부": "1번째 방문"
     }]
-
     temp_data2 = [
+
             {
         "가게 이름": "헤일우드",
         "닉네임": "Sunny488",
@@ -187,16 +224,15 @@ if __name__ == "__main__":
         "신촌중식당",
         "신촌역중국집"  
     ]
-    rp = review_preprocessing()
-    print(temp_data1[1]['리뷰 내용'])
-    result = rp.preprocess_with_morphs(temp_data1[1]['리뷰 내용'], norm=True, stem=True)
-    print(result)
-    result = rp.preprocess_with_nouns(temp_data1[1]['리뷰 내용'])
-    print(result)
-    result = rp.phrases(temp_data1[1]['리뷰 내용'])
-    print(result)
-    result = rp.normalize(temp_data1[1]['리뷰 내용'])
-    print(result)
+    
+    rp = review_preprocessing(filepath=FILE_DOWNLOAD_PATH, github_url=STOPWORDS_URL)
+    print(temp_data1[2]['리뷰 내용'])
+    result = rp.preprocessing(temp_data1[2]['리뷰 내용'], norm=True, stem=True)
+    string = " ".join(result)
+    print(string)
+    '''
+    신조어 추가 필요 ex) 또간집, 곱도리탕
+    '''
 
     bow_keyword = []
 

@@ -1,1 +1,2 @@
 webdriver-manager==4.0.2
+soynlp==0.0.493
