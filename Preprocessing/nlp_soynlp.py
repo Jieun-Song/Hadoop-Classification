@@ -75,7 +75,6 @@ sentences = [review["리뷰 내용"] for review in temp_data1]
 하나의 문장 혹은 문서에서 보다는 어느 정도 규모가 있는 동일한 집단의 문서 (homogeneous documents) 에서 잘 작동합니다.
 영화 댓글들이나 하루의 뉴스 기사처럼 같은 단어를 이용하는 집합의 문서만 모아서 Extractors 를 학습하시면 좋습니다.
 이질적인 집단의 문서들은 하나로 모아 학습하면 단어가 잘 추출되지 않습니다.
-이질적인 집단의 문서들은 하나로 모아 학습하면 단어가 잘 추출되지 않습니다.
 '''
 
 with open("temp_sentences.txt", "w", encoding="utf-8") as f:
