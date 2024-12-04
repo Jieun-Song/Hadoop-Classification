@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
-		explode, split, col, lower, trim,udf,  count, when, coalesce, lit, monotonically_increasing_id, concat
+		explode, split, col, lower, trim,udf,  count, when, coalesce, lit, monotonically_increasing_id, concat, collect_list, concat_ws
 )
 from pyspark.sql.types import BooleanType, ArrayType, StringType
 
@@ -42,7 +42,8 @@ is_ad_keyword_udf = udf(is_ad_keyword, BooleanType())
 review_words = review_words.withColumn('is_ad_keyword', is_ad_keyword_udf('word'))
 
 ad_word_counts = review_words.filter(col('is_ad_keyword')).groupBy('id').agg(
-		count('word').alias('ad_word_count')
+		    count('word').alias('ad_word_count'),
+			collect_list('word').alias('inclue_ad_keyword')
 )
 
 review_with_counts = review_df.join(ad_word_counts, on='id', how='left')
@@ -51,11 +52,15 @@ review_with_counts = review_with_counts.withColumn(
 		'ad_word_count', coalesce(col('ad_word_count'), lit(0))
 )
 review_with_counts = review_with_counts.withColumn(
-		 'is_ad_review', when(col('ad_word_count') >=5, True).otherwise(False)
+		 'is_ad_review', when(col('ad_word_count') > 5, True).otherwise(False)
+)
+
+review_with_counts = review_with_counts.withColumn(
+		    'inclue_ad_keyword_str', concat_ws(',', col('inclue_ad_keyword'))
 )
 
 result_df = review_with_counts.select(
-		 'id', 'title_pos', 'ad_word_count', 'is_ad_review'
+		 'id', 'title_pos', 'ad_word_count', 'is_ad_review','inclue_ad_keyword_str'
 )
 
 result_df.write.csv(
