@@ -3,7 +3,8 @@ import konlpy
 import subprocess
 import pandas as pd
 
-KEWORD_PATH = "data/crawling/gangnamMatzip/gangnamKeyword.csv"
+# 절대 경로로 입력하셔야합니다.
+KEWORD_PATH = "/Users/nine1ll/BDP_termProject/Hadoop-Classification/data/crawling/ad-keyword/ad_keyword_merged.csv"
 
 
 class add_word_in_Okt_dictionary:

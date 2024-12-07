@@ -66,7 +66,8 @@ class review_preprocessing:
     3. 가게 이름 추출 - 준호님이 해결 해주심. (스키마 변경으로 완)
     4. 유니코드 처리 불가 - navermap - 12/03(완)
     5. 혹시 모를 오류 대비 오류 처리 진행 중. (해당 파일만 추후 다시 작업 가능하도록.) - 12/07(완)
-    6. Okt 사전 수정 코드.. 
+    6. Okt 사전 수정 코드.. - 12/07(완)
+    7. 파일 스키마가 모두 다름... 왜 이렇게 주신 겁니까 선생님들.. ㅠ - 파일 분리로 해결..
     """
     def __init__(self, filepath="Preprocessing/data/stopwords.txt", github_url=None):
         self.okt = Okt()
@@ -220,20 +221,24 @@ class review_preprocessing:
             start_time = time.time()
             print()
             print(blog_review)
-            
-            df = pd.read_csv(blog_review, encoding='utf-8-sig')
-            df.dropna(inplace=True)
-            if "가게 이름" in df.columns:
-                df.columns = ['Title', 'Content']
+            try:
+                df = pd.read_csv(blog_review, encoding='utf-8-sig')
+                df.dropna(inplace=True)
+                if "가게 이름" in df.columns:
+                    df.columns = ['Title', 'Content']
 
-            df['hash_tag'] = df['Content'].apply(self.extract_hash_tags)
-            df['title_pos'] = df['Title'].apply(lambda x: self.preprocessing(x, norm=True, stem=True))
-            df['content_pos'] = df['Content'].apply(lambda x: self.preprocessing(x, norm=True, stem=True))
-            
-            df = df[['title_pos','content_pos','hash_tag']]
-            reuslt_file_names[index] = self.convert_district_name(reuslt_file_names[index])
+                df['hash_tag'] = df['Content'].apply(self.extract_hash_tags)
+                df['title_pos'] = df['Title'].apply(lambda x: self.preprocessing(x, norm=True, stem=True))
+                df['content_pos'] = df['Content'].apply(lambda x: self.preprocessing(x, norm=True, stem=True))
+                
+                df = df[['title_pos','content_pos','hash_tag']]
+                reuslt_file_names[index] = self.convert_district_name(reuslt_file_names[index])
 
-            df.to_csv(RESULT_PATH_POS+reuslt_file_names[index]+".csv")
+                df.to_csv(RESULT_PATH_POS+reuslt_file_names[index]+".csv")
+            
+            except Exception as e:
+                self.error_file_name.append({blog_review: e})
+
             end_time = time.time()
             print(f"{reuslt_file_names[index]} 경과 시간: {(end_time - start_time):.2f} sec")
         
@@ -246,23 +251,28 @@ class review_preprocessing:
         st = time.time()
         blog_reviews, reuslt_file_names = self.data_raed()
         for index, blog_review in enumerate(blog_reviews):
+            
             start_time = time.time()
             print()
             print(blog_review)
-            
-            df = pd.read_csv(blog_review, encoding='utf-8-sig')
-            df.dropna(inplace=True)
-            if "가게 이름" in df.columns:
-                df.columns = ['Title', 'Content']
+            try:
+                df = pd.read_csv(blog_review, encoding='utf-8-sig')
+                df.dropna(inplace=True)
+                if "가게 이름" in df.columns:
+                    df.columns = ['Title', 'Content']
 
-            df['hash_tag'] = df['Content'].apply(self.extract_hash_tags)
-            df['title_pos'] = df['Title'].apply(lambda x: self.preprocessing_nouns(x))
-            df['content_pos'] = df['Content'].apply(lambda x: self.preprocessing_nouns(x))
-            
-            df = df[['title_pos','content_pos','hash_tag']]
-            reuslt_file_names[index] = self.convert_district_name(reuslt_file_names[index])
-            
-            df.to_csv(RESULT_PATH_NOUNS+reuslt_file_names[index]+".csv")
+                df['hash_tag'] = df['Content'].apply(self.extract_hash_tags)
+                df['title_pos'] = df['Title'].apply(lambda x: self.preprocessing_nouns(x))
+                df['content_pos'] = df['Content'].apply(lambda x: self.preprocessing_nouns(x))
+                
+                df = df[['title_pos','content_pos','hash_tag']]
+                reuslt_file_names[index] = self.convert_district_name(reuslt_file_names[index])
+                
+                df.to_csv(RESULT_PATH_NOUNS+reuslt_file_names[index]+".csv")
+                
+            except Exception as e:
+                self.error_file_name.append({blog_review: e})
+
             end_time = time.time()
             print(f"{reuslt_file_names[index]} 경과 시간: {(end_time - start_time):.2f} sec")
         et = time.time()
@@ -373,6 +383,8 @@ if __name__ == "__main__":
     # 처음 실행 시 add_word 먼저 실행.
     # add_word.add_word_anaconda() # 처음 실행하면 주석을 풀고 실행해주세요.
     rp = review_preprocessing(filepath=FILE_DOWNLOAD_PATH, github_url=STOPWORDS_URL)
+    rp.start_pos()
+    rp.start_nouns()
     rp.start_pos_with_no_title()
     rp.start_nouns_with_no_title()
     rp.error_file_name_extract()
