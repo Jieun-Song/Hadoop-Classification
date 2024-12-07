@@ -269,7 +269,7 @@ class review_preprocessing:
                 reuslt_file_names[index] = self.convert_district_name(reuslt_file_names[index])
                 
                 df.to_csv(RESULT_PATH_NOUNS+reuslt_file_names[index]+".csv")
-                
+
             except Exception as e:
                 self.error_file_name.append({blog_review: e})
 
@@ -304,7 +304,7 @@ class review_preprocessing:
             
             with open(file_name, "w") as file:
                 for error in self.error_file_name:
-                    file.write(error + "\n")  # 각 항목을 줄 단위로 저장
+                    file.write(", ".join(map(str, error.items())) + "\n")
 
             print(f"파일 '{file_name}'에 저장되었습니다.")
         else:
